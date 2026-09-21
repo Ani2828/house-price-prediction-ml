@@ -1,22 +1,30 @@
 """
-Evaluate regression models for the House Price Prediction project.
+Evaluate the final house price prediction model.
 """
 
+from pathlib import Path
+
+import joblib
 import numpy as np
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
-from src.train import train_models
+from src.preprocess import load_data, prepare_data, split_data
 
 
-def evaluate_model(model, X_test, y_test, model_name):
+RANDOM_STATE = 42
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+MODEL_PATH = PROJECT_ROOT / "models" / "house_price_model.pkl"
+
+
+def evaluate_model(model, X_test, y_test):
     """
-    Evaluate a trained regression model.
+    Evaluate the final trained regression model.
 
     Args:
         model: Trained regression model.
         X_test: Test features.
         y_test: Actual target values.
-        model_name (str): Name of the model.
 
     Returns:
         dict: Model evaluation metrics.
@@ -32,58 +40,57 @@ def evaluate_model(model, X_test, y_test, model_name):
 
     r2 = r2_score(y_test, predictions)
 
-    results = {
-        "Model": model_name,
+    return {
         "MAE": mae,
         "RMSE": rmse,
         "R2 Score": r2
     }
 
-    return results
 
-
-def evaluate_models():
+def evaluate_final_model():
     """
-    Train models and evaluate their performance.
+    Load the final model and evaluate it on the test set.
     """
 
-    (
-        linear_model,
-        random_forest_model,
+    if not MODEL_PATH.exists():
+        raise FileNotFoundError(
+            f"Model not found at: {MODEL_PATH}. "
+            "Run 'python -m src.train' first."
+        )
+
+    # Load dataset
+    df = load_data()
+
+    # Prepare features and target
+    X, y = prepare_data(df)
+
+    # Recreate the same train/test split used during training
+    X_train, X_test, y_train, y_test = split_data(
+        X,
+        y,
+        test_size=0.2,
+        random_state=RANDOM_STATE
+    )
+
+    # Load trained model
+    model = joblib.load(MODEL_PATH)
+
+    # Evaluate
+    results = evaluate_model(
+        model,
         X_test,
         y_test
-    ) = train_models()
-
-    linear_results = evaluate_model(
-        linear_model,
-        X_test,
-        y_test,
-        "Linear Regression"
     )
 
-    random_forest_results = evaluate_model(
-        random_forest_model,
-        X_test,
-        y_test,
-        "Random Forest"
-    )
-
-    results = [
-        linear_results,
-        random_forest_results
-    ]
-
-    print("\nModel Performance")
+    print("\nFinal Model Performance")
     print("=" * 60)
-
-    for result in results:
-        print(f"\n{result['Model']}")
-        print(f"MAE:      {result['MAE']:.4f}")
-        print(f"RMSE:     {result['RMSE']:.4f}")
-        print(f"R² Score: {result['R2 Score']:.4f}")
+    print("Model: Gradient Boosting")
+    print(f"MAE:      {results['MAE']:.4f}")
+    print(f"RMSE:     {results['RMSE']:.4f}")
+    print(f"R² Score: {results['R2 Score']:.4f}")
 
     return results
 
 
 if __name__ == "__main__":
-    evaluate_models()
+    evaluate_final_model()
