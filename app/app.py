@@ -18,7 +18,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.predict import predict_house_price
-
+from src.logger import log_prediction
 
 # ============================================================
 # Page configuration
@@ -341,7 +341,10 @@ if predict_button:
     try:
 
         prediction = predict_house_price(features)
-
+        log_prediction(
+            model_name="Gradient Boosting",
+            prediction=prediction
+        )
         st.success("Prediction generated successfully!")
 
         st.markdown(
