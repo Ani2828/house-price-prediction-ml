@@ -1,5 +1,5 @@
 """
-Make house price predictions using the trained Random Forest model.
+Make house price predictions using the trained model.
 """
 
 from pathlib import Path
@@ -13,7 +13,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 MODEL_PATH = PROJECT_ROOT / "models" / "house_price_model.pkl"
 
 
-# Feature order used during training
+# Features expected by the model
 FEATURES = [
     "crim",
     "zn",
@@ -33,26 +33,72 @@ FEATURES = [
 
 def load_model():
     """
-    Load the trained Random Forest model.
+    Load the trained model from disk.
 
     Returns:
-        Trained model.
+        Trained machine learning model.
     """
 
     if not MODEL_PATH.exists():
         raise FileNotFoundError(
             f"Model not found at: {MODEL_PATH}. "
-            "Run the training pipeline first."
+            "Run 'python -m src.train' first."
         )
 
-    model = joblib.load(MODEL_PATH)
+    return joblib.load(MODEL_PATH)
 
-    return model
+
+def validate_features(features):
+    """
+    Validate prediction input.
+
+    Args:
+        features (dict): Input feature dictionary.
+
+    Raises:
+        ValueError: If features are missing, unexpected,
+                    or contain invalid values.
+    """
+
+    missing_features = [
+        feature
+        for feature in FEATURES
+        if feature not in features
+    ]
+
+    unexpected_features = [
+        feature
+        for feature in features
+        if feature not in FEATURES
+    ]
+
+    if missing_features:
+        raise ValueError(
+            f"Missing features: {missing_features}"
+        )
+
+    if unexpected_features:
+        raise ValueError(
+            f"Unexpected features: {unexpected_features}"
+        )
+
+    for feature in FEATURES:
+        value = features[feature]
+
+        if not isinstance(value, (int, float)):
+            raise ValueError(
+                f"Feature '{feature}' must be numeric."
+            )
+
+        if pd.isna(value):
+            raise ValueError(
+                f"Feature '{feature}' cannot be empty."
+            )
 
 
 def predict_house_price(features):
     """
-    Predict the house price for a single house.
+    Predict house price from input features.
 
     Args:
         features (dict): House feature values.
@@ -60,6 +106,8 @@ def predict_house_price(features):
     Returns:
         float: Predicted house price.
     """
+
+    validate_features(features)
 
     model = load_model()
 
@@ -70,7 +118,7 @@ def predict_house_price(features):
 
     prediction = model.predict(input_data)[0]
 
-    return prediction
+    return float(prediction)
 
 
 if __name__ == "__main__":
@@ -93,4 +141,6 @@ if __name__ == "__main__":
 
     predicted_price = predict_house_price(sample_house)
 
-    print(f"Predicted house price: {predicted_price:.2f}")
+    print(
+        f"Predicted house price: {predicted_price:.2f}"
+    )
