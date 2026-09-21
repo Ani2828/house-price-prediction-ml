@@ -81,3 +81,27 @@ def get_prediction_count():
     connection.close()
 
     return count
+def get_prediction_history(limit=10):
+    """Return the most recent prediction records."""
+
+    initialize_database()
+
+    connection = sqlite3.connect(DATABASE_PATH)
+
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        SELECT timestamp, model_name, prediction
+        FROM predictions
+        ORDER BY id DESC
+        LIMIT ?
+        """,
+        (limit,)
+    )
+
+    records = cursor.fetchall()
+
+    connection.close()
+
+    return records

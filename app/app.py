@@ -18,7 +18,11 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.predict import predict_house_price
-from src.logger import log_prediction
+from src.logger import (
+    log_prediction,
+    get_prediction_count,
+    get_prediction_history
+)
 
 # ============================================================
 # Page configuration
@@ -391,6 +395,56 @@ with st.expander("📊 About the Model"):
 
     st.table(performance_data)
 
+# ============================================================
+# Prediction History
+# ============================================================
+
+st.divider()
+
+st.subheader("📊 Prediction History")
+
+prediction_count = get_prediction_count()
+
+col1, col2 = st.columns(2)
+
+with col1:
+    st.metric(
+        "Total Predictions",
+        prediction_count
+    )
+
+with col2:
+    st.metric(
+        "Model",
+        "Gradient Boosting"
+    )
+
+history = get_prediction_history(limit=10)
+
+if history:
+
+    history_data = []
+
+    for timestamp, model_name, prediction in history:
+        history_data.append(
+            {
+                "Timestamp": timestamp,
+                "Model": model_name,
+                "Predicted Value (K$)": round(prediction, 2)
+            }
+        )
+
+    st.dataframe(
+        history_data,
+        use_container_width=True,
+        hide_index=True
+    )
+
+else:
+
+    st.info(
+        "No predictions have been recorded yet."
+    )
 
 # ============================================================
 # Footer
