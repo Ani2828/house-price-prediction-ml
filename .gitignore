@@ -30,3 +30,6 @@ Thumbs.db
 
 # Temporary files
 *.tmp
+
+# ML prediction database
+data/
